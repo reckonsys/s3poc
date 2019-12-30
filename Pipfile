@@ -10,7 +10,8 @@ ipdb = "*"
 flake8 = "*"
 
 [packages]
-boto = "*"
+boto3 = "*"
+bottle = "*"
 
 [requires]
 python_version = "3.7"

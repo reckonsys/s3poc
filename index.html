@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Upload a File</title>
+        <script charset="utf-8" type="text/javascript">
+            function uploadFile(that){
+                fetch('/presigned')
+                    .then((response) => response.json())
+                    .then((json) => {
+                        var formData = new FormData();
+                        for (var k in json.fields) {
+                            if (json.fields.hasOwnProperty(k)) {
+                                formData.append(k, json.fields[k]);
+                            }
+                        }
+                        formData.append('file', that.files[0]);
+                        fetch(json.url, {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then((response) => {
+                                console.log('Success:', response.text());
+                                data = {key: json.fields.key, hmac: json.hmac}
+                                fetch('/uploaded',{
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(data)
+                                })
+                            })
+                    });
+            }
+        </script>
+    </head>
+    <body>
+        <input type="file" onchange="uploadFile(this)"/>
+    </body>
+</html>
