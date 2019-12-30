@@ -5,8 +5,9 @@
         <meta name="viewport" content="width=device-width">
         <title>Upload a File</title>
         <script charset="utf-8" type="text/javascript">
-            function uploadFile(that){
-                fetch('/presigned')
+
+            function getPresignedData(file){
+                return fetch('/presigned')
                     .then((response) => response.json())
                     .then((json) => {
                         var formData = new FormData();
@@ -15,24 +16,38 @@
                                 formData.append(k, json.fields[k]);
                             }
                         }
-                        formData.append('file', that.files[0]);
-                        fetch(json.url, {
-                            method: 'POST',
-                            body: formData
-                        })
-                            .then((response) => {
-                                console.log('Success:', response.text());
-                                data = {key: json.fields.key, hmac: json.hmac}
-                                fetch('/uploaded',{
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify(data)
-                                })
-                            })
+                        formData.append('file', file);
+                        return {json: json, formData: formData}
                     });
             }
+
+            function postToS3(data){
+                return fetch(data.json.url, {
+                    method: 'POST',
+                    body: data.formData
+                })
+                    .then((response) => {
+                        return {key: data.json.fields.key, hmac: data.json.hmac};
+                    })
+            }
+
+            function postUploaded(data){
+                // Notify server that the files have been uploaded
+                return fetch('/uploaded',{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+            }
+
+            function uploadFile(that){
+                getPresignedData(that.files[0])
+                    .then(postToS3)
+                    .then(postUploaded)
+            }
+
         </script>
     </head>
     <body>
